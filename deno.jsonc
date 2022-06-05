@@ -1,0 +1,46 @@
+{
+	"lint": {
+		"files": {
+			"include": ["./src/"]
+		},
+		"rules": {
+			"tags": ["recommended"],
+			"include": [
+				"camelcase",
+				"default-param-last",
+				"eqeqeq",
+				"no-const-assign",
+				"no-eval",
+				"no-non-null-asserted-optional-chain",
+				"no-non-null-assertion",
+				"no-sparse-arrays",
+				"no-throw-literal",
+				"no-undef",
+				"single-var-declarator"
+			],
+			"exclude": [
+				"ban-untagged-todo",
+				"explicit-function-return-type",
+				"explicit-module-boundary-types",
+				"no-await-in-loop",
+				"no-top-level-await",
+				"prefer-ascii",
+				"prefer-primordials",
+				"triple-slash-reference"
+			]
+		}
+	},
+	// NOTICE: Not using `deno fmt` in this repository
+	"fmt": {
+		"files": {
+			"include": ["./src/"]
+		},
+		"options": {
+			"useTabs": true,
+			"singleQuote": true
+		}
+	},
+	"tasks": {
+		"check": "deno check ./src/oauth.js"
+	}
+}
