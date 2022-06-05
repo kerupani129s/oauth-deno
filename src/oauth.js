@@ -18,10 +18,8 @@ const buildURL = (requestURL, params, isPost) => {
 	}
 };
 
-const buildBody = (bodyValue, contentType) => {
-	if ( 'application/json' === contentType ) {
-		return JSON.stringify(bodyValue);
-	} else if ( 'application/x-www-form-urlencoded' === contentType ) {
+const buildBody = (bodyValue, isBodyTypeParams) => {
+	if ( isBodyTypeParams ) {
 		return buildQuery(bodyValue);
 	} else {
 		return bodyValue;
@@ -143,15 +141,16 @@ export const OAuth = class {
 		} = {},
 	) {
 
+		const isBodyTypeParams = 'application/x-www-form-urlencoded' === contentType;
 		const isPost = 'POST' === method && bodyValue;
 
 		// 
 		const url = buildURL(requestURL, params, isPost);
 
-		const bodyParams = isPost && 'application/x-www-form-urlencoded' === contentType ? bodyValue : [];
+		const bodyParams = isPost && isBodyTypeParams ? bodyValue : [];
 		const authorization = await this.#getAuthHeaderValue(method, requestURL, params, oAuthParams, bodyParams);
 
-		const body = isPost ? buildBody(bodyValue, contentType) : undefined;
+		const body = isPost ? buildBody(bodyValue, isBodyTypeParams) : undefined;
 
 		const request = new Request(url, {
 			method,

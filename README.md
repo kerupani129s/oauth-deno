@@ -126,24 +126,3 @@ const request = await authClient.makeRequestForResource(
 
 const response = await fetch(request);
 ```
-
-```js
-const resourceURL = 'resourceURL';
-const method = 'POST';
-const contentType = 'application/json';
-const bodyValue = {
-	'key_foo': 'value_foo',
-	'key_bar': 'value_bar',
-};
-
-const request = await authClient.makeRequestForResource(
-	resourceURL,
-	{
-		method,
-		contentType,
-		bodyValue,
-	},
-);
-
-const response = await fetch(request);
-```
