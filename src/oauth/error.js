@@ -6,11 +6,11 @@ export class OAuthError extends Error {
 
 	/**
 	 * Create an OAuthError object.
-	 * @param message
+	 * @param [message]
 	 * @param [options]
 	 * @param [options.error]
 	 */
-	constructor(message, options = undefined) {
+	constructor(message = undefined, options = undefined) {
 
 		super(message, options);
 
