@@ -1,5 +1,15 @@
-export const OAuthError = class extends Error {
+/**
+ * The OAuthError class.
+ * @extends Error
+ */
+export class OAuthError extends Error {
 
+	/**
+	 * Create an OAuthError object.
+	 * @param message
+	 * @param [options]
+	 * @param [options.error]
+	 */
 	constructor(message, options = undefined) {
 
 		super(message, options);
@@ -12,4 +22,4 @@ export const OAuthError = class extends Error {
 
 	}
 
-};
+}

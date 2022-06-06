@@ -26,7 +26,10 @@ const buildBody = (bodyValue, isBodyTypeParams) => {
 	}
 };
 
-export const OAuth = class {
+/**
+ * The OAuth 1.0a client class.
+ */
+export class OAuth {
 
 	static #type = 'OAuth';
 
@@ -39,11 +42,21 @@ export const OAuth = class {
 	#signatureMethod = 'HMAC-SHA1';
 	#version = '1.0';
 
+	/**
+	 * Create an OAuth object.
+	 * @param consumerKey - The consumer key.
+	 * @param consumerSecret - The consumer secret.
+	 */
 	constructor(consumerKey, consumerSecret) {
 		this.#consumerKey = consumerKey;
 		this.#consumerSecret = consumerSecret;
 	}
 
+	/**
+	 * Set the token and token secret.
+	 * @param [token=] - The token.
+	 * @param [tokenSecret=] - The token secret.
+	 */
 	setToken(token = '', tokenSecret = '') {
 		this.#token = token;
 		this.#tokenSecret = tokenSecret;
@@ -61,9 +74,7 @@ export const OAuth = class {
 		return Math.floor(Date.now() / 1000);
 	}
 
-	/**
-	 * 注意: oAuthParams に realm や oauth_signature を含めないでください。
-	 */
+	// 注意: oAuthParams に realm や oauth_signature を含めないでください。
 	async #getSignature(method, requestURL, params, oAuthParams, bodyParams) {
 
 		// 参考: https://oauth.net/core/1.0a/#rfc.section.9.1.1
@@ -165,6 +176,15 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Make a Request object for a request token.
+	 * @param requestTokenURL - The request token URL.
+	 * @param [options]
+	 * @param [options.method=POST] - The request method.
+	 * @param [options.params=[]] - The HTTP GET parameters.
+	 * @param [options.callbackURL=oob] - The callback URL.
+	 * @returns {Request}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.1.1
 	async makeRequestForRequestToken(
 		requestTokenURL,
@@ -193,6 +213,11 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Get a request token from the Responmse object.
+	 * @param {Response} response - The Response object.
+	 * @returns {URLSearchParams}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.1.2
 	async getRequestTokenParamsFrom(response) {
 
@@ -218,6 +243,13 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Generate a user authorization URL with the parameters.
+	 * @param authURL - The user authorization URL.
+	 * @param [options]
+	 * @param [options.params=[]] - The HTTP GET parameters.
+	 * @returns {string}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.2.1
 	generateAuthURL(
 		authURL,
@@ -232,6 +264,13 @@ export const OAuth = class {
 		return `${authURL}?${query}`;
 	}
 
+	/**
+	 * Make a Request object for a access token.
+	 * @param accessTokenURL - The access token URL.
+	 * @param [options]
+	 * @param [options.method=POST] - The request method.
+	 * @returns {Request}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.3.1
 	async makeRequestForAccessToken(
 		accessTokenURL,
@@ -257,6 +296,11 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Get an access token from the Responmse object.
+	 * @param {Response} response - The Response object.
+	 * @returns {URLSearchParams}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.3.2
 	async getAccessTokenParamsFrom(response) {
 
@@ -276,6 +320,16 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Make a Request object for the protected resources.
+	 * @param resourceURL - The resource URL.
+	 * @param [options]
+	 * @param [options.method=GET] - The request method.
+	 * @param [options.params=[]] - The HTTP GET parameters.
+	 * @param [options.contentType=application/x-www-form-urlencoded] - The content type of the body of the HTTP POST request.
+	 * @param [options.bodyValue] - The value of the body of the HTTP POST request.
+	 * @returns {Request}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.7
 	async makeRequestForResource(
 		resourceURL,
@@ -302,4 +356,4 @@ export const OAuth = class {
 
 	}
 
-};
+}
