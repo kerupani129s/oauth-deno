@@ -7,7 +7,9 @@ import { hmacSHA1 } from './hash/hmac_sha1.js';
 import { OAuthError } from './oauth/error.js';
 
 const buildQuery = params => (
-	params.map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`).join('&')
+	params
+		.map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`)
+		.join('&')
 );
 
 const buildURL = (requestURL, params, isPost) => {
@@ -26,7 +28,10 @@ const buildBody = (bodyValue, isBodyTypeParams) => {
 	}
 };
 
-export const OAuth = class {
+/**
+ * The OAuth 1.0a client class.
+ */
+export class OAuth {
 
 	static #type = 'OAuth';
 
@@ -39,11 +44,21 @@ export const OAuth = class {
 	#signatureMethod = 'HMAC-SHA1';
 	#version = '1.0';
 
+	/**
+	 * Create an OAuth object.
+	 * @param consumerKey - The consumer key.
+	 * @param consumerSecret - The consumer secret.
+	 */
 	constructor(consumerKey, consumerSecret) {
 		this.#consumerKey = consumerKey;
 		this.#consumerSecret = consumerSecret;
 	}
 
+	/**
+	 * Set the token and token secret.
+	 * @param [token=] - The token.
+	 * @param [tokenSecret=] - The token secret.
+	 */
 	setToken(token = '', tokenSecret = '') {
 		this.#token = token;
 		this.#tokenSecret = tokenSecret;
@@ -61,10 +76,14 @@ export const OAuth = class {
 		return Math.floor(Date.now() / 1000);
 	}
 
-	/**
-	 * 注意: oAuthParams に realm や oauth_signature を含めないでください。
-	 */
-	async #getSignature(method, requestURL, params, oAuthParams, bodyParams) {
+	// 注意: oAuthParams に realm や oauth_signature を含めないでください。
+	async #generateSignature(
+		method,
+		requestURL,
+		params,
+		oAuthParams,
+		bodyParams,
+	) {
 
 		// 参考: https://oauth.net/core/1.0a/#rfc.section.9.1.1
 		const paramsString = [...params, ...oAuthParams, ...bodyParams]
@@ -113,20 +132,40 @@ export const OAuth = class {
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.5.4.1
 	async #getCredentials(method, requestURL, params, oAuthParams, bodyParams) {
 
-		const signature = await this.#getSignature(method, requestURL, params, oAuthParams, bodyParams);
+		const signature = await this.#generateSignature(
+			method,
+			requestURL,
+			params,
+			oAuthParams,
+			bodyParams,
+		);
 
 		const credentials = [
 			...oAuthParams,
 			['oauth_signature', signature],
-		].map(([key, value]) => `${encodePercent(key)}="${encodePercent(value)}"`).join(', ');
+		]
+			.map(([key, value]) => `${encodePercent(key)}="${encodePercent(value)}"`)
+			.join(', ');
 
 		return credentials;
 
 	}
 
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.5.4.1
-	async #getAuthHeaderValue(method, requestURL, params, oAuthParams, bodyParams) {
-		const credentials = await this.#getCredentials(method, requestURL, params, oAuthParams, bodyParams);
+	async #getAuthHeaderValue(
+		method,
+		requestURL,
+		params,
+		oAuthParams,
+		bodyParams,
+	) {
+		const credentials = await this.#getCredentials(
+			method,
+			requestURL,
+			params,
+			oAuthParams,
+			bodyParams,
+		);
 		return `${OAuth.#type} ${credentials}`;
 	}
 
@@ -141,14 +180,22 @@ export const OAuth = class {
 		} = {},
 	) {
 
-		const isBodyTypeParams = 'application/x-www-form-urlencoded' === contentType;
+		const isBodyTypeParams = (
+			'application/x-www-form-urlencoded' === contentType
+		);
 		const isPost = 'POST' === method && bodyValue;
 
 		// 
 		const url = buildURL(requestURL, params, isPost);
 
 		const bodyParams = isPost && isBodyTypeParams ? bodyValue : [];
-		const authorization = await this.#getAuthHeaderValue(method, requestURL, params, oAuthParams, bodyParams);
+		const authorization = await this.#getAuthHeaderValue(
+			method,
+			requestURL,
+			params,
+			oAuthParams,
+			bodyParams,
+		);
 
 		const body = isPost ? buildBody(bodyValue, isBodyTypeParams) : undefined;
 
@@ -165,12 +212,25 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Make a Request object for a request token.
+	 * @param requestTokenURL - The request token URL.
+	 * @param [options]
+	 * @param [options.method=POST] - The request method.
+	 * @param [options.params=[]] - The HTTP GET parameters.
+	 * @param [options.contentType=application/x-www-form-urlencoded] - The content type of the body of the HTTP POST request.
+	 * @param [options.bodyValue] - The value of the body of the HTTP POST request.
+	 * @param [options.callbackURL=oob] - The callback URL.
+	 * @returns {Request}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.1.1
 	async makeRequestForRequestToken(
 		requestTokenURL,
 		{
 			method = 'POST',
 			params = [],
+			contentType = 'application/x-www-form-urlencoded',
+			bodyValue,
 			callbackURL = 'oob',
 		} = {},
 	) {
@@ -178,7 +238,7 @@ export const OAuth = class {
 		this.setToken();
 
 		// 
-		const oAuthParams =  [
+		const oAuthParams = [
 			['oauth_callback'        , callbackURL],
 			['oauth_consumer_key'    , this.#consumerKey],
 			['oauth_nonce'           , this.#getNonce()],
@@ -187,12 +247,23 @@ export const OAuth = class {
 			['oauth_version'         , this.#version],
 		];
 
-		const request = await this.#makeRequest(requestTokenURL, { method, params, oAuthParams });
+		const request = await this.#makeRequest(requestTokenURL, {
+			method,
+			params,
+			oAuthParams,
+			contentType,
+			bodyValue,
+		});
 
 		return request;
 
 	}
 
+	/**
+	 * Get a request token from the Responmse object.
+	 * @param {Response} response - The Response object.
+	 * @returns {URLSearchParams}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.1.2
 	async getRequestTokenParamsFrom(response) {
 
@@ -218,6 +289,13 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Generate a user authorization URL with the parameters.
+	 * @param authURL - The user authorization URL.
+	 * @param [options]
+	 * @param [options.params=[]] - The HTTP GET parameters.
+	 * @returns {string}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.2.1
 	generateAuthURL(
 		authURL,
@@ -228,10 +306,19 @@ export const OAuth = class {
 		const query = [
 			['oauth_token', this.#token],
 			...params,
-		].map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`).join('&');
+		]
+			.map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`)
+			.join('&');
 		return `${authURL}?${query}`;
 	}
 
+	/**
+	 * Make a Request object for a access token.
+	 * @param accessTokenURL - The access token URL.
+	 * @param [options]
+	 * @param [options.method=POST] - The request method.
+	 * @returns {Request}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.3.1
 	async makeRequestForAccessToken(
 		accessTokenURL,
@@ -241,7 +328,7 @@ export const OAuth = class {
 		} = {},
 	) {
 
-		const oAuthParams =  [
+		const oAuthParams = [
 			['oauth_consumer_key'    , this.#consumerKey],
 			['oauth_nonce'           , this.#getNonce()],
 			['oauth_signature_method', this.#signatureMethod],
@@ -251,12 +338,20 @@ export const OAuth = class {
 			['oauth_version'         , this.#version],
 		];
 
-		const request = await this.#makeRequest(accessTokenURL, { method, oAuthParams });
+		const request = await this.#makeRequest(accessTokenURL, {
+			method,
+			oAuthParams,
+		});
 
 		return request;
 
 	}
 
+	/**
+	 * Get an access token from the Responmse object.
+	 * @param {Response} response - The Response object.
+	 * @returns {URLSearchParams}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.3.2
 	async getAccessTokenParamsFrom(response) {
 
@@ -276,6 +371,16 @@ export const OAuth = class {
 
 	}
 
+	/**
+	 * Make a Request object for the protected resources.
+	 * @param resourceURL - The resource URL.
+	 * @param [options]
+	 * @param [options.method=GET] - The request method.
+	 * @param [options.params=[]] - The HTTP GET parameters.
+	 * @param [options.contentType=application/x-www-form-urlencoded] - The content type of the body of the HTTP POST request.
+	 * @param [options.bodyValue] - The value of the body of the HTTP POST request.
+	 * @returns {Request}
+	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.7
 	async makeRequestForResource(
 		resourceURL,
@@ -287,7 +392,7 @@ export const OAuth = class {
 		} = {},
 	) {
 
-		const oAuthParams =  [
+		const oAuthParams = [
 			['oauth_consumer_key'    , this.#consumerKey],
 			['oauth_nonce'           , this.#getNonce()],
 			['oauth_signature_method', this.#signatureMethod],
@@ -296,10 +401,16 @@ export const OAuth = class {
 			['oauth_version'         , this.#version],
 		];
 
-		const request = await this.#makeRequest(resourceURL, { method, params, oAuthParams, contentType, bodyValue });
+		const request = await this.#makeRequest(resourceURL, {
+			method,
+			params,
+			oAuthParams,
+			contentType,
+			bodyValue,
+		});
 
 		return request;
 
 	}
 
-};
+}
