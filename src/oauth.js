@@ -182,6 +182,8 @@ export class OAuth {
 	 * @param [options]
 	 * @param [options.method=POST] - The request method.
 	 * @param [options.params=[]] - The HTTP GET parameters.
+	 * @param [options.contentType=application/x-www-form-urlencoded] - The content type of the body of the HTTP POST request.
+	 * @param [options.bodyValue] - The value of the body of the HTTP POST request.
 	 * @param [options.callbackURL=oob] - The callback URL.
 	 * @returns {Request}
 	 */
@@ -191,6 +193,8 @@ export class OAuth {
 		{
 			method = 'POST',
 			params = [],
+			contentType = 'application/x-www-form-urlencoded',
+			bodyValue,
 			callbackURL = 'oob',
 		} = {},
 	) {
@@ -207,7 +211,7 @@ export class OAuth {
 			['oauth_version'         , this.#version],
 		];
 
-		const request = await this.#makeRequest(requestTokenURL, { method, params, oAuthParams });
+		const request = await this.#makeRequest(requestTokenURL, { method, params, oAuthParams, contentType, bodyValue });
 
 		return request;
 
