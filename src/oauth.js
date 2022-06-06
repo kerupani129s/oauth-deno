@@ -75,7 +75,7 @@ export class OAuth {
 	}
 
 	// 注意: oAuthParams に realm や oauth_signature を含めないでください。
-	async #getSignature(method, requestURL, params, oAuthParams, bodyParams) {
+	async #generateSignature(method, requestURL, params, oAuthParams, bodyParams) {
 
 		// 参考: https://oauth.net/core/1.0a/#rfc.section.9.1.1
 		const paramsString = [...params, ...oAuthParams, ...bodyParams]
@@ -124,7 +124,7 @@ export class OAuth {
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.5.4.1
 	async #getCredentials(method, requestURL, params, oAuthParams, bodyParams) {
 
-		const signature = await this.#getSignature(method, requestURL, params, oAuthParams, bodyParams);
+		const signature = await this.#generateSignature(method, requestURL, params, oAuthParams, bodyParams);
 
 		const credentials = [
 			...oAuthParams,
