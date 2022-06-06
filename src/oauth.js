@@ -7,7 +7,9 @@ import { hmacSHA1 } from './hash/hmac_sha1.js';
 import { OAuthError } from './oauth/error.js';
 
 const buildQuery = params => (
-	params.map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`).join('&')
+	params
+		.map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`)
+		.join('&')
 );
 
 const buildURL = (requestURL, params, isPost) => {
@@ -75,7 +77,13 @@ export class OAuth {
 	}
 
 	// 注意: oAuthParams に realm や oauth_signature を含めないでください。
-	async #generateSignature(method, requestURL, params, oAuthParams, bodyParams) {
+	async #generateSignature(
+		method,
+		requestURL,
+		params,
+		oAuthParams,
+		bodyParams,
+	) {
 
 		// 参考: https://oauth.net/core/1.0a/#rfc.section.9.1.1
 		const paramsString = [...params, ...oAuthParams, ...bodyParams]
@@ -124,20 +132,40 @@ export class OAuth {
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.5.4.1
 	async #getCredentials(method, requestURL, params, oAuthParams, bodyParams) {
 
-		const signature = await this.#generateSignature(method, requestURL, params, oAuthParams, bodyParams);
+		const signature = await this.#generateSignature(
+			method,
+			requestURL,
+			params,
+			oAuthParams,
+			bodyParams,
+		);
 
 		const credentials = [
 			...oAuthParams,
 			['oauth_signature', signature],
-		].map(([key, value]) => `${encodePercent(key)}="${encodePercent(value)}"`).join(', ');
+		]
+			.map(([key, value]) => `${encodePercent(key)}="${encodePercent(value)}"`)
+			.join(', ');
 
 		return credentials;
 
 	}
 
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.5.4.1
-	async #getAuthHeaderValue(method, requestURL, params, oAuthParams, bodyParams) {
-		const credentials = await this.#getCredentials(method, requestURL, params, oAuthParams, bodyParams);
+	async #getAuthHeaderValue(
+		method,
+		requestURL,
+		params,
+		oAuthParams,
+		bodyParams,
+	) {
+		const credentials = await this.#getCredentials(
+			method,
+			requestURL,
+			params,
+			oAuthParams,
+			bodyParams,
+		);
 		return `${OAuth.#type} ${credentials}`;
 	}
 
@@ -152,14 +180,22 @@ export class OAuth {
 		} = {},
 	) {
 
-		const isBodyTypeParams = 'application/x-www-form-urlencoded' === contentType;
+		const isBodyTypeParams = (
+			'application/x-www-form-urlencoded' === contentType
+		);
 		const isPost = 'POST' === method && bodyValue;
 
 		// 
 		const url = buildURL(requestURL, params, isPost);
 
 		const bodyParams = isPost && isBodyTypeParams ? bodyValue : [];
-		const authorization = await this.#getAuthHeaderValue(method, requestURL, params, oAuthParams, bodyParams);
+		const authorization = await this.#getAuthHeaderValue(
+			method,
+			requestURL,
+			params,
+			oAuthParams,
+			bodyParams,
+		);
 
 		const body = isPost ? buildBody(bodyValue, isBodyTypeParams) : undefined;
 
@@ -202,7 +238,7 @@ export class OAuth {
 		this.setToken();
 
 		// 
-		const oAuthParams =  [
+		const oAuthParams = [
 			['oauth_callback'        , callbackURL],
 			['oauth_consumer_key'    , this.#consumerKey],
 			['oauth_nonce'           , this.#getNonce()],
@@ -211,7 +247,13 @@ export class OAuth {
 			['oauth_version'         , this.#version],
 		];
 
-		const request = await this.#makeRequest(requestTokenURL, { method, params, oAuthParams, contentType, bodyValue });
+		const request = await this.#makeRequest(requestTokenURL, {
+			method,
+			params,
+			oAuthParams,
+			contentType,
+			bodyValue,
+		});
 
 		return request;
 
@@ -264,7 +306,9 @@ export class OAuth {
 		const query = [
 			['oauth_token', this.#token],
 			...params,
-		].map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`).join('&');
+		]
+			.map(([key, value]) => `${encodePercent(key)}=${encodePercent(value)}`)
+			.join('&');
 		return `${authURL}?${query}`;
 	}
 
@@ -284,7 +328,7 @@ export class OAuth {
 		} = {},
 	) {
 
-		const oAuthParams =  [
+		const oAuthParams = [
 			['oauth_consumer_key'    , this.#consumerKey],
 			['oauth_nonce'           , this.#getNonce()],
 			['oauth_signature_method', this.#signatureMethod],
@@ -294,7 +338,10 @@ export class OAuth {
 			['oauth_version'         , this.#version],
 		];
 
-		const request = await this.#makeRequest(accessTokenURL, { method, oAuthParams });
+		const request = await this.#makeRequest(accessTokenURL, {
+			method,
+			oAuthParams,
+		});
 
 		return request;
 
@@ -345,7 +392,7 @@ export class OAuth {
 		} = {},
 	) {
 
-		const oAuthParams =  [
+		const oAuthParams = [
 			['oauth_consumer_key'    , this.#consumerKey],
 			['oauth_nonce'           , this.#getNonce()],
 			['oauth_signature_method', this.#signatureMethod],
@@ -354,7 +401,13 @@ export class OAuth {
 			['oauth_version'         , this.#version],
 		];
 
-		const request = await this.#makeRequest(resourceURL, { method, params, oAuthParams, contentType, bodyValue });
+		const request = await this.#makeRequest(resourceURL, {
+			method,
+			params,
+			oAuthParams,
+			contentType,
+			bodyValue,
+		});
 
 		return request;
 
