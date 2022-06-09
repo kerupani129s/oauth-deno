@@ -263,6 +263,7 @@ export class OAuth {
 	 * Get a request token from the Responmse object.
 	 * @param {Response} response - The Response object.
 	 * @returns {URLSearchParams}
+	 * @throws {OAuthError}
 	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.1.2
 	async getRequestTokenParamsFrom(response) {
@@ -351,6 +352,7 @@ export class OAuth {
 	 * Get an access token from the Responmse object.
 	 * @param {Response} response - The Response object.
 	 * @returns {URLSearchParams}
+	 * @throws {OAuthError}
 	 */
 	// 参考: https://oauth.net/core/1.0a/#rfc.section.6.3.2
 	async getAccessTokenParamsFrom(response) {
