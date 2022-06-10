@@ -10,7 +10,7 @@
 ### Client
 
 ```js
-import { OAuth } from 'https://raw.githubusercontent.com/kerupani129s/oauth-deno/v1.0.4/src/oauth.js';
+import { OAuth } from 'https://raw.githubusercontent.com/kerupani129s/oauth-deno/v1.0.5/src/oauth.js';
 
 const authClient = new OAuth(
     'consumerKey',
@@ -126,3 +126,7 @@ const request = await authClient.makeRequestForResource(
 
 const response = await fetch(request);
 ```
+
+## License
+
+[MIT License](LICENSE)
